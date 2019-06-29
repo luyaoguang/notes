@@ -19,6 +19,8 @@
         init:function(selector, context) {
             context = context || document;//默认上下文环境为document;
             var match;//用于保存创建的DOM元素
+            var elem;//用去保存查询到的DOM元素
+            var index = 0;//用于遍历
             if(!selector) {
                 return this;//$() $(null) $(undefined) $(false)调用 直接返回jQuery对象
             }
@@ -29,8 +31,34 @@
                 if(match) {//创建DOM节点
                     $.merge(this, $.parseHTML(selector, context))
                 } else {//查找DOM节点
-
+                    elem = document.querySelectorAll(selector);//查询符合选择器的所有DOM元素
+                    var elems = Array.prototype.slice.call(elem);//因为querySelectorAll拿到的是一个类数组对象 调用slice方法转为数组
+                    this.length = elems.length;//将实例的length属性设置为查询到的DOM元素长度
+                    for(; index < elems.length; index++) {
+                        this[index] = elems[index];
+                    }
+                    this.context = context;
+                    this.selector = selector;
                 }
+            } else if (selector.nodeType) {//这里指的是传入DOM对象转为jQuery对象
+                this.context = this[0] = selector;
+                this.length = 1;
+                return this
+            } else if ($.isFunction(selector)) {//如果是函数的话
+                return new jQuery(document)[jQuery.fn.ready ? "ready" : "load"](selector);
+                //返回一个由document对象创建的jQuery实例对象
+                //如果jQuery实例对象的原型汇中有ready就调用ready方法否在就调用load方法并传入函数。
+            }
+        },
+        ready:function(fn) {//定义实例的ready方法
+            bindReady();//如果DOM对象已经加载完毕
+            if($.isReady) {
+                fn.call(document,$);
+            } else {
+                $.readyList.push(function() {
+                    return fn.call(this,$);
+                })
+                return this;
             }
         }
     }

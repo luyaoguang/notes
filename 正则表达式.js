@@ -87,7 +87,7 @@ var reg = new RegExp('\\bis\\b','g');
       * ^ 以xxxx开头 (不是在[]中不是取反了哦)
       * $ 以xxxx结尾
       * \b 单词边界
-      * \B 非单词表姐
+      * \B 非单词边界
       */
 
      var str = 'This is a boy';
@@ -205,3 +205,106 @@ var reg = new RegExp('\\bis\\b','g');
        */
 
 
+       /**
+        * 正则表达式对象的test方法
+        * 用于测试字符串中是否存在匹配正则表达式模式的字符串 有就返回true 没有返回false
+        */
+
+        var reg1 = /\w/;
+        var reg2 = /\w/g;
+
+        //不适用全局
+        reg1.test('a');//true
+        reg1.test('$');//false
+        //使用全局
+        reg2.test('a');//true
+        teg2.test('a');//false
+        //思考：为什么第一次是true 第二次就变成false了呢？
+        //其实这是lastIndex的原因 使用全局的话 test会将结果作用到正则表达式实例本身 将匹配到字符串的下标 重新赋值了正则表达式实例的lastIndex属性上
+        reg.test('a');//true
+        //第三次又变成了true呢？因为如果test为false的情况下 会将正则表达式实例的lastIndex属性重置为0
+        //解决方案:用实例去执行
+        /\w/.test('a');
+        //但是这样每次都会去实例化正则表达式对象 造成内存损耗
+        //其实我们使用test的方法只是想去知道字符串是否有符合正则表达式模式的字符串 不关心其他的 所以一般不要加g参数
+        //如果我们不但需要知道字符串中是否有符合正则表达式模式的字符串 还要知道该字符串的下标位置时 可以考虑使用exec方法
+
+        /**
+         * 正则表达式对象的exec方法
+         * 使用正则表达式模式对字符串执行搜索，并将更新全局RegExp对象的属性以反应结果
+         * 如果没有匹配到结果返回null 匹配到就返回一个结果数组：
+         * -index 声明匹配文本的第一个字符的位置
+         * -input 存放被检索的字符串string
+         * 
+         * 非全局调用：
+         * 调用非全局的RegExp对象的exec方法时，返回数组
+         * 第一个元素是与正则表达式相匹配的文本
+         * 第二个元素是与RegExpObject的第一个表达式相匹配的文本(如果有的话)
+         * ....
+         * 第n个元素与RegExpObject的第n个表达式匹配的文本
+         */
+        var reg1 =  /\d(\w)\d/;
+        var reg2 =  /\d(\w)\d/g;
+        var str = '$1a2b3c4d53'; 
+        //执行1次 非全局
+        reg1.exec(str); // ["1a2", "a", index: 1, input: "1a2b3c4d53", groups: undefined]
+        console.log(reg1.lastIndex);//0
+        //执行2次 非全局
+        reg1.exec(str); // ["1a2", "a", index: 1, input: "1a2b3c4d53", groups: undefined]
+        console.log(reg1.lastIndex);//0
+        //执行1次 全局
+        reg2.exec(str); // ["1a2", "a", index: 1, input: "1a2b3c4d53", groups: undefined]
+        console.log(reg2.lastIndex);//4
+        //执行2次 全局
+        reg2.exec(str);// ["3c4", "c", index: 4, input: "1a2b3c4d53", groups: undefined]
+        console.log(reg2.lastIndex);//7
+       
+
+        var reg3 =  /\d(\w)\d/g;
+        var ret;
+        while(ret = reg3.exec(str)) {
+            console.log(ret);
+        }
+        //["1a2", "a", index: 0, input: "1a2b3c4d53", groups: undefined]
+        //["3c4", "c", index: 4, input: "1a2b3c4d53", groups: undefined]
+
+        /**
+         * 字符串对象的search方法
+         * 用于检索字符串中指定的子字符串，或检索与正则表达式想匹配的子字符串
+         * 返回一个匹配的index 没有就返回-1
+         * 该方法不执行全局匹配，它将忽略g，并且总是从字符串的0下标开始进行检索
+         */
+        //如果传入了非字符串也非正则的参数进行调用时 search会尝试将参数包装成RegExp对象 一下三种调用都可以
+        'a1b2c3'.search(1);
+        'a1b2c3'.search('1');
+        'a1b2c3'.search(/1/);
+
+        /**
+         * 字符串对象的match方法
+         * match方法将检索字符串，以找到一个或多个与RegExp匹配的文本
+         * RegExp是否具有g修饰符，对结果影响很大
+         * 
+         * 非全局
+         * 如果RegExp没有标志g，那么match方法就可能在字符串中执行一次匹配
+         * 如果没有找到任何匹配文本，返回null
+         * 如果找到了，就返回一个数组，该数组与RegExp.exec方法返回的数组一样
+         * 
+         * 全局调用
+         * 如果RegExp具有标志g则match方法将执行全局搜索
+         * 没有找到任何匹配，返回null
+         * 如果找到一个或者多个匹配字符串，则返回数组。
+         * 改数组中存放着字符串中所有的匹配子字符串，改数组没有index属性和input属性。
+         */
+        
+         /**
+          * 字符串的replace方法
+          * String.prototype.replace(str,replaceStr)
+          * String.prototype.replace(reg,replaceStr)
+          * String.prototype.replace(reg,function)
+          * 
+          * 如果第二个参数是一个function 它接收四个参数
+          * 1.匹配字符串
+          * 2.正则表达式分组的内容，没有分组则没有该参数
+          * 3.匹配项在字符串中的index
+          * 4.原字符串
+          */
