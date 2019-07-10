@@ -1,0 +1,58 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+    <input type="text" id="txt">
+    <button id="send">发送</button>
+    <script>
+        var websocket = new WebSocket("ws://localhost:3000");
+        websocket.onopen = function() {
+            document.getElementById("send").onclick = function() {
+                var txt = document.getElementById("txt").value;
+                websocket.send(txt);
+            }
+        }
+        websocket.onclose = function() {
+            console.log("close");
+        }
+        websocket.onmessage = function(e) {
+           var data = e.data;
+           var div = document.createElement('div');
+           div.innerHTML = data;
+           document.body.appendChild(div);
+        }
+    </script>
+    <script>
+        var ws = require('nodejs-websocket');
+        const PORT = 3000;
+        var connCount = 0;
+        var server = ws.createServer(function(conn) {
+            connCount++;
+            conn.nick = 'user'+connCount;
+            broadcast(conn.nick + " comes in");
+            conn.on("text",function(str) {
+                broadcast(conn.nick + " :" + str);
+            })
+            conn.on("close",function() {
+                broadcast(conn.nick + " left");
+            })
+            conn.on("error",function(err) {
+                console.log(err);
+            })
+        }).listen(PORT)
+        function broadcast(str) {
+            server.connections.forEach(conn => {
+                conn.sendText(str);
+            })
+        }
+        console.log("server in listening at " + PORT);
+    </script>
+</body>
+</html>

@@ -63,14 +63,14 @@
                             if(memoryData) {//这里表示已经最少执行过一次_fire
                                 start = _list.length;//获取当前回调队列里的长度并保存到start中
                             }
-                            options.unique && (args.length = 1);//定义了unique 且一次传入多个函数 只保留一个
-                            if(!options.unique || !_list.length) {//只有没定义unique 或者 毁掉队列是空的 才会去push
                                 args.forEach(function(fn) {//遍历传入的参数
                                     if(toString.call(fn) === "[object Function]") {//判断参数是否为函数
-                                        _list.push(fn);//向函数队列里保存回调函数
+                                        if(!options.unique || !this.has(fn)) {
+                                            _list.push(fn);//向函数队列里保存回调函数
+                                        }//只有没定义unique 或者 毁掉队列是空的 才会去push
+
                                     }
                                 })
-                            }
                             //如果memoryData有值 说明定义了memory参数 并且 _fire 函数已经执行过最少一次
                             memoryData && (_fire(memoryData))  
                             
@@ -81,6 +81,9 @@
                                 _fire([this,arguments]);//传入上下文环境和调用fire传入的参数
                             }
                             
+                        },
+                        has:function(fn) {
+                            return _list.indexOf(fn) > -1 ;
                         }
                     }
                     return self;

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="height=device-height,width=device-width, initial-scale=1.0,minisum-scale=1.0,maximum-sacle=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <script src="https://staticnew.superboss.cc/lib/jquery.js"></script>
+    <title>111111</title>
+    <style>
+        *{
+            margin:0;
+            padding:0;
+        }
+        .img_box{
+            width:800px;
+            height:700px;
+            margin:0 auto;
+            position: relative;
+        }
+        .bg_img{
+            display: block;
+            width:100%;
+            height: 100%;
+            filter: blur(20px);
+            position: absolute;
+            left:0;
+            top:0;
+            z-index: 0;
+        }
+        #canvas {
+            display: block;
+            position: absolute;
+            left:0;
+            top:0;
+            z-index:100;
+        }
+        .button {
+            display: block;
+            position: absolute;
+            bottom:20px;
+            z-index:200;
+            width:100px;
+            height:30px;
+            line-height: 30px;
+            color:#fff;
+            text-align: center;
+            border-radius:5px;
+            cursor: pointer;
+        }
+        #reset-button{
+            left:200px;
+            background-color:#058;
+        }
+        #show-button {
+            right:200px;
+            background:#085;
+        }
+    </style>
+</head>
+<body>
+    <div class="img_box">
+        <img class="bg_img" src="harden.jpg" alt="">
+        <canvas id="canvas"></canvas>
+        <span class="button" id="reset-button" onclick="reset()">RESET</span>
+        <span class="button" id="show-button" onclick="show()">SHOW</span>
+    </div>
+    <script>
+
+
+        var canvasW = 800,canvasH = 700, radius = 50;
+        var clipRegion = {x:400, y:300, r:radius};
+        var canvas = document.getElementById('canvas');
+        canvas.width = canvasW;
+        canvas.height = canvasH;
+        var context = canvas.getContext('2d');
+        var image = new Image();
+        var timer;
+        image.src = "harden.jpeg";
+        image.onload = function() {
+            document.querySelector('.img_box').style.width = canvasW + 'px';
+            document.querySelector('.img_box').style.height = canvasH + 'px';
+            document.querySelector('.bg_img').style.width = canvasW + 'px';
+            document.querySelector('.bg_img').style.height = canvasH + 'px';
+            initCanvas();
+        }
+
+        function initCanvas() {
+            draw(image,clipRegion);
+        }
+        function draw(image,clipRegion) {
+            image.width = canvasW;
+            image.height = canvasH;
+            context.clearRect(0,0,canvasW,canvasH);
+            context.save();
+            setClipRegin(clipRegion);
+            console.log(image);
+            context.drawImage(image,0,0);
+            context.restore();
+        }
+        function setClipRegin({x,y,r}) {
+            context.beginPath();
+            context.arc(x, y, r, 0, Math.PI*2, false);
+            context.clip();
+        }
+        function show() {
+            var count = 0;
+            timer = setInterval(function(){
+                console.log(count++);
+                if(clipRegion.r >= 1000) {
+                    clearInterval(timer);
+                    timer = null;
+                    return
+                }
+                clipRegion.r += 20;
+                draw(image,clipRegion);
+            },30)
+        }
+        function reset() {
+            clearInterval(timer);
+            timer = null;
+            clipRegion = {
+                x:Math.random() * (canvasW - radius * 2) + radius , 
+                y:Math.random() * (canvasH - radius * 2) + radius , 
+                r:radius
+            };
+            initCanvas();
+        }
+    </script>
+</body>
+</html>
