@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+    //什么是内存泄露
+    //内存溢出一定会泄露 内存泄露不一定会报错  
+    //内存泄漏：丢失了一个对象的引用 但是它依然存在内存当中。
+    <script>
+        function Person(name) {
+            this.__proto__.name = name;
+        }
+        var me = new Person('abc');
+        console.log(me.name);
+    </script>
+</body>
+</html>ji

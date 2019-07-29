@@ -319,6 +319,11 @@
 				descriptor[this.expando] = {   //钥匙
 					value: unlock
 				};
+				// {
+				// 	jQuery101089554822917892030: {
+				// 		value:1
+				// 	}	
+				// }
 				//方法直接在一个对象上定义一个或多个新的属性或修改现有属性,并返回该对象。
 				//DOM   =>  jQuery101089554822917892030.7449198463843298 = 1;
 				Object.defineProperties(elem, descriptor);
@@ -363,7 +368,9 @@
 			if (!(eventHandle = elemData.handle)) {
 				//Event 对象代表事件的状态 通过apply传递
 				eventHandle = elemData.handle = function(e) {
-					return jQuery.event.dispatch.apply(eventHandle.elem, arguments);
+					// return jQuery.event.dispatch.apply(eventHandle.elem, arguments);
+					//arguments === e;
+					return jQuery.event.dispatch.apply(this, arguments);
 				}
 			}
 
@@ -384,7 +391,20 @@
 				handler: handler,
 				guid: handler.guid,
 			});
-
+			/** 
+			 * elemData = {
+			 * 	events:[
+			 * 		[type]:[
+			 * 			{type:type,hadler:handler,guide:hadler.guid},
+			 * 			delegateCount:handlers.length
+			 * 		]
+			 * 	],
+			 * 	handle:function() {
+			 * 		return jQuery.event.dispatch.apply(eventHandle.elem, arguments);
+			 * 	}
+			 * }
+			 * 
+			*/
 			handlers.delegateCount = handlers.length;  //有多少事件代理默认0
 
 			eventHandle.elem = elem;//为回调函数邦洞DOM对象，这样执行回调时候就能找到指定的DOM对象，拿到缓存中的对应对象。
@@ -411,7 +431,6 @@
 
 		handlers: function( event, handlers ) {
 			// handlers[0].handler.call(this, event);
-			console.log(handlers);
 			handlers.forEach(item => {
 				item.handler.call(this,event);
 			})

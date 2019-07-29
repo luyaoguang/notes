@@ -7,22 +7,11 @@
     <title>Document</title>
 </head>
 <body>
-    <script src="./Deferred.js"></script>
+    <div class="box"></div>
+    <script src="./jq.js"></script>
     <script>
-        new Promise(function(resolve,reject) {
-            resolve(112233);
-        }).then(function(message) {
-            console.log(message);
-        } ).then(function() {
-            console.log('abc');
-        })
-        var dtd = $.Deferred();
-        dtd.then(function() {
-            console.log(111);
-        }).then(function() {
-            console.log(222);
-        })
-        dtd.resolve();
+        $('.box').data('kkk','123');
+        console.log($('.box').data('kkk'));
         // dtd.resolve();
         // dtd.resolve();
         // dtd.resolve();
