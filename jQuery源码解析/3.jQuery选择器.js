@@ -1,7 +1,7 @@
 /**
  * DOM对象和jQuery对象的区别
  * DOM对象是由宿主环境提供的对象，在文档对象模型中，每个部分都是节点。
- * jQuery对象是有jQuery构造函数创建出来的 通过jQuery选择器可以将HTML元素获取并以一种类数组的形式储存在jQuery对象中
+ * jQuery对象是由jQuery构造函数创建出来的 通过jQuery选择器可以将HTML元素获取并以一种类数组的形式储存在jQuery对象中
  * 
  * 1. $("<a>")创建一个A的DOM对象 并转化为jQuery对象
  * 2. $(".class")查找一个DOM对象 并转换为jQuery对象

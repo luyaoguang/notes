@@ -1,10 +1,16 @@
 //抽样函数
-function samplle (array,n) {
+function sample (array,n) {
     if(n == null) {
         return array[random(array.length - 1)];
     }
-    clone()
+    var _sample = clone(array),
+        length = _sample.length;
+        n = Math.max(Math.min(n, legnth), 0);
+    for(var index = 0; index < n; index++) {
+        random(index, length - 1)
+    }
 }
+
 function random (min,max) {
     if(max == null) {
         max = min;
@@ -12,6 +18,7 @@ function random (min,max) {
     }
     return min + Math.floor(Math.random() * (max - min + 1));
 }
+
 function clone(object) {
-    return isArray(obj) ? obj.slice() : extend({},obj);
+    return isArray(object) ? obj.slice() : extend({},object);
 }

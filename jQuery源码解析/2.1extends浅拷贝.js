@@ -18,7 +18,7 @@
             },
         }
         jQuery.fn.extend = jQuery.extend = function() {
-            var target = arguments[0];//将传入的第一个参数定义为target 也就是被扩展的对象
+            var target = arguments[0] ;//将传入的第一个参数定义为target 也就是被扩展的对象
             var length = arguments.length;
             var i = 1;  //遍历传入参数时使用 我们应该从第二个参数开始遍历 第一个参数对象是用来被扩展的 因此i被定义为1
             var option;//遍历传入参数时 用来保存当前遍历到的参数
