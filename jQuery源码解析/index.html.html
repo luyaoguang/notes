@@ -8,10 +8,20 @@
 </head>
 <body>
     <div class="box"></div>
-    <script src="./jq.js"></script>
+    <script src="./5.Deferred.js"></script>
+    <!-- <script src="./jq.js"></script> -->
     <script>
-        $('.box').data('kkk','123');
-        console.log($('.box').data('kkk'));
+        
+        var dtd = $.Deferred();
+        dtd.then(function(a,b) {
+           console.log(b);
+        }).then(function(a,b) {
+            console.log(b);
+        }).then(function(a,b) {
+            console.log(b);
+        })
+        dtd.resolve();
+
         // dtd.resolve();
         // dtd.resolve();
         // dtd.resolve();

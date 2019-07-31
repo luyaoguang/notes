@@ -85,28 +85,35 @@
                             //如果传参了 则将promise对象的属性和方法扩展到目标对象上 否则返回promise对象
                             return obj != null ? jQuery.extend(obj,promise) : promise;
                         },
-                        then:function() {
+                        /**
+                         * 调用then方法 会创建两个延时对象(oldDeferred,newDeferred)
+                         */
+                        then:function(/* fnDone, fnFail, fnProgress */) {
                             var funcs = [].slice.call(arguments);//拿到所有回调函数 [0]成功回调 [1]失败回调 [2]进行中回调
-                            return jQuery.Deferred(function(newDeferred) {
+                            return jQuery.Deferred(function(newDefer) {
                                 tuples.forEach(function(tuple, i) {
-                                    var fn = jQuery.isFunction(funcs[i]) && funcs[i];
-                                    deferred[tuple[1]](function() {
-                                        var returnDeferred = fn && fn.apply(this, arguments);
-                                        if(returnDeferred && jQuery.isFunction(returnDeferred.promise)) {
-                                            returnDeferred.promise()
-                                            .done(newDeferred.reosolve)
-                                            .fail(newDeferred.reject)
-                                            .progress(newDeferred.notify);
+                                    var action = tuple[ 0 ],//取出[resolve | reject | notify]改变执行状态
+                                    fn = jQuery.isFunction( funcs[ i ] ) && funcs[ i ];
+                                    // deferred[ done | fail | progress ] for forwarding actions to newDefer
+                                    deferred[ tuple[1] ](function() {
+                                        var returned = fn && fn.apply( this, arguments );//获取回调函数执行的返回值
+                                        //判断如果有返回值 并且返回值的promise是一个函数
+                                        if ( returned && jQuery.isFunction( returned.promise ) ) {
+                                            returned.promise() //这里指的是返回的Deferrd对象 给返回的Deferred对象注册[done | fail | progress]方法
+                                                .done( newDefer.resolve ) //添加的回调函数是当前Deferred对象的[resolve | reject | notify]方法
+                                                .fail( newDefer.reject )  //也就是说当前Deferred的状态是由返回的Deferred对象决定的 当返回的Deferred执行resolve方法 
+                                                .progress( newDefer.notify ); //也就是会执行done的回调 再执行当前Deferred.resolve方法 形成闭环
+                                        } else {//如果返回的不是Deferred对象 就倒过来
+                                            newDefer[ action + "With" ]();
                                         }
-                                    })
+                                    });
                                 })
                             })
-                          
                         }
                     },
                     deferred = {};//需要return出去的延时对象
                     tuples.forEach(function(tuple,i) {
-                        var list =tuple[2],//取到回调对了
+                        var list =tuple[2],//取到回调队列
                         stateString = tuple[3];//拿到最终状态信息
                         if(stateString) {//只有成功或者失败
                             list.add(function() {
@@ -123,6 +130,7 @@
                         deferred[tuple[0] + "With"] = list.fire;
                     })
                     if(fn) {
+                        //因为在执行then函数时 会重新执行一遍Deferred方法 生成新的deferred对象 所以此处deferred指向newDeferred
                         fn.call(deferred,deferred);
                     }
                     promise.promise(deferred);
@@ -189,3 +197,24 @@
             }
             root.$  = root.jQuery = jQuery;
         })(this)
+      
+
+//创建了一个新的延时器对象
+                            // return jQuery.Deferred(function(newDeferred) {
+                            //     tuples.forEach(function(tuple, i) {
+                            //         //依次拿到调用then方法传入的回调函数
+                            //         var fn = jQuery.isFunction(funcs[i]) && funcs[i];
+                            //         //调用deferred[done | fail | progress] 添加回调函数
+                            //         deferred[tuple[1]](function() {
+                            //             //arguments指向调用时传入的函数
+                            //             var returnDeferred = fn && fn.apply(this, arguments);
+                            //             if(returnDeferred && jQuery.isFunction(returnDeferred.promise)) {
+                            //                 returnDeferred.promise()
+                            //                 .done(newDeferred.reosolve)
+                            //                 .fail(newDeferred.reject)
+                            //                 .progress(newDeferred.notify);
+                            //             }
+                            //         })
+                            //     })
+                            // }).promise();
+  
