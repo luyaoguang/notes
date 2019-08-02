@@ -1,14 +1,25 @@
-/*
- * @Author: Administrator
- * @Date:   2018-10-30 20:40:51
- * @Last Modified by:   Administrator
- * @Last Modified time: 2018-11-01 22:10:22
- */
+
 (function(root) {
 	var testExp = /^\s*(<[\w\W]+>)[^>]*$/;
 	var rejectExp = /^<(\w+)\s*\/?>(?:<\/\1>|)$/;
 	var core_version = "1.0.1";
 	var optionsCache = {};
+
+	function returnTrue() {
+		return true;
+	}
+
+	function returnFalse() {
+		return false;
+	}
+
+	//activeElement 属性返回文档中当前获得焦点的元素。
+	function safeActiveElement() {
+		try {
+			return document.activeElement;
+		} catch (err) {}
+	}
+
 	var jQuery = function(selector, context) {
 		return new jQuery.prototype.init(selector, context);
 	}
@@ -113,6 +124,7 @@
 	jQuery.extend({
 		expando: "jQuery" + (core_version + Math.random()).replace(/\D/g, ""),
 		guid: 1, //计数器
+		now: Date.now, //返回当前时间距离时间零点(1970年1月1日 00:00:00 UTC)的毫秒数
 		//类型检测     
 		isPlainObject: function(obj) {
 			return typeof obj === "object";
@@ -287,12 +299,12 @@
 					}
 				}
 			} else {
-				if (length === undefined) {//兼容非类数组对象
-					for (name in object) {//如果是非类数组对象 就使用for in 循环 拿到对象的所有属性 执行并执行回调
+				if (length === undefined) {
+					for (name in object) {
 						callback.call(object, name, object[name]);
 					}
 				} else {
-					for (; i < length;) {//这里是取出所有的DOM对象 并执行回调函数
+					for (; i < length;) {
 						callback.call(object[i], i, object[i++]);
 					}
 				}
@@ -307,30 +319,25 @@
 		this.cache = {};
 	}
 
-	Data.uid = 1;//为每个DOM对象对象设置唯一的key 每在缓存中创建一个对象 uid++
+	Data.uid = 1;
 
 	Data.prototype = {
-		key: function(elem) {//这里接收DOM对象
+		key: function(elem) {
 			var descriptor = {},
-				unlock = elem[this.expando];//查看DOM对象有没有被赋值this.expando
+				unlock = elem[this.expando];
 
-			if (!unlock) {//如果没有赋值，说明该DOM对象还没有被绑定事件处理程序
-				unlock = Data.uid++;//将程序个数的标识++
-				descriptor[this.expando] = {   //钥匙
+			if (!unlock) {
+				unlock = Data.uid++;
+				descriptor[this.expando] = { //钥匙
 					value: unlock
 				};
-				// {
-				// 	jQuery101089554822917892030: {
-				// 		value:1
-				// 	}	
-				// }
 				//方法直接在一个对象上定义一个或多个新的属性或修改现有属性,并返回该对象。
 				//DOM   =>  jQuery101089554822917892030.7449198463843298 = 1;
 				Object.defineProperties(elem, descriptor);
 			}
 			//确保缓存对象记录信息
 			if (!this.cache[unlock]) {
-				this.cache[unlock] = {};   //  数据
+				this.cache[unlock] = {}; //  数据
 			}
 
 			return unlock;
@@ -338,7 +345,7 @@
 
 		get: function(elem, key) {
 			//找到或者创建缓存
-			var cache = this.cache[this.key(elem)];
+			var cache = this.cache[this.key(elem)]; //1  {events:{},handle:function(){}} 
 			//key 有值直接在缓存中取读
 			return key === undefined ? cache : cache[key];
 		},
@@ -352,88 +359,68 @@
 	//jQuery 事件模块
 	jQuery.event = {
 		//1:利用 data_priv 数据缓存,分离事件与数据 2:元素与缓存中建立 guid 的映射关系用于查找 
-		add: function(elem, type, handler) {//接收DOM元素，事件类型，回调函数。
+		add: function(elem, type, handler) {
+			var eventHandle, events, handlers;
 			//事件缓存 数据对象
-			var elemData = data_priv.get(elem);//保存缓存中拿到的对象
+			var elemData = data_priv.get(elem);
 
-			var eventHandle;//保存回调处理程序
-			var events;//保存事件对象
-			var handlers;//用于保存多个回调函数
-
-			//同一个元素,不同事件,不重复绑定    {events:{}}
-			if (!(events = elemData.events)) {
-				events = elemData.events = {};
-			}
-
-			if (!(eventHandle = elemData.handle)) {
-				//Event 对象代表事件的状态 通过apply传递
-				eventHandle = elemData.handle = function(e) {
-					// return jQuery.event.dispatch.apply(eventHandle.elem, arguments);
-					//arguments === e;
-					return jQuery.event.dispatch.apply(this, arguments);
-				}
-			}
-
-			//通过events存储同一个元素上的多个事件   {events:{click:[]}}   
-			if (!(handlers = events[type])) {
-				handlers = events[type] = [];
-				// handlers.delegateCount = 0;  //有多少事件代理默认0
-			} 
 
 			//检测handler是否存在ID(guid)如果没有那么传给他一个ID
 			//添加ID的目的是 用来寻找或者删除相应的事件
 			if (!handler.guid) {
-				handler.guid = jQuery.guid++;   //guid == 1
+				handler.guid = jQuery.guid++; //guid == 1
 			}
-
+			/*
+			给缓存增加事件处理句柄
+			elemData = {
+			  events:
+			  handle:	
+			}
+			*/
+			//同一个元素,不同事件,不重复绑定    {events:{}}
+			if (!(events = elemData.events)) {
+				events = elemData.events = {};
+			}
+			if (!(eventHandle = elemData.handle)) {
+				//Event 对象代表事件的状态 通过apply传递
+				eventHandle = elemData.handle = function(e) {
+					return jQuery.event.dispatch.apply(eventHandle.elem, arguments);
+				}
+			}
+			eventHandle.elem = elem;
+			//通过events存储同一个元素上的多个事件   {events:{click:[]}}   
+			if (!(handlers = events[type])) {
+				handlers = events[type] = [];
+				handlers.delegateCount = 0; //有多少事件代理默认0
+			}
 			handlers.push({
 				type: type,
 				handler: handler,
 				guid: handler.guid,
 			});
-			/** 
-			 * elemData = {
-			 * 	events:[
-			 * 		[type]:[
-			 * 			{type:type,hadler:handler,guide:hadler.guid},
-			 * 			delegateCount:handlers.length
-			 * 		]
-			 * 	],
-			 * 	handle:function() {
-			 * 		return jQuery.event.dispatch.apply(eventHandle.elem, arguments);
-			 * 	}
-			 * }
-			 * 
-			*/
-			handlers.delegateCount = handlers.length;  //有多少事件代理默认0
-
-			eventHandle.elem = elem;//为回调函数邦洞DOM对象，这样执行回调时候就能找到指定的DOM对象，拿到缓存中的对应对象。
 			//添加事件
 			if (elem.addEventListener) {
 				elem.addEventListener(type, eventHandle, false);
 			}
 		},
-		
-		//修复事件对象event 从缓存体中的events对象取得对应队列。
 
+		//修复事件对象event 从缓存体中的events对象取得对应队列。
 		dispatch: function(event) {
 			//IE兼容性处理如：event.target or event.srcElement
-			// event = jQuery.event.fix(event);
+			//event = jQuery.event.fix(event);
 
 			//提取当前元素在cache中的events属性值。 click
 			var handlers = (data_priv.get(this, "events") || {})[event.type] || [];
 			event.delegateTarget = this;
+			var args = [].slice.call(arguments);
+			
 			//执行事件处理函数
-		   jQuery.event.handlers.call( this, event, handlers );
+			jQuery.event.handlers.call(this,handlers, args);
 		},
-		
-		//执行事件处理函数
 
-		handlers: function( event, handlers ) {
-			// handlers[0].handler.call(this, event);
-			handlers.forEach(item => {
-				item.handler.call(this,event);
-			})
+		//执行事件处理函数
+		handlers: function(handlers, args) {   //[event , 自定义参数]
+			handlers[0].handler.apply(this, args);
 		},
 
 		fix: function(event) {
@@ -475,26 +462,180 @@
 
 			return fixHook.filter ? fixHook.filter(event, originalEvent) : event;
 		},
+		special: {//特殊事件
+			load: {
+				// Prevent triggered image.load events from bubbling to window.load
+				noBubble: true
+			},
+			focus: {
+				// 执行默认focus方法
+				trigger: function() {
+					if (this !== safeActiveElement() && this.focus) {
+						//console.log( this.focus)
+						this.focus();
+						return false;
+					}
+				},
+				delegateType: "focusin"
+			},
+			blur: {
+				trigger: function() {
+					if (this === safeActiveElement() && this.blur) {
+						this.blur();
+						return false;
+					}
+				},
+				delegateType: "focusout"
+			},
+			click: {
+				// For checkbox, fire native event so checked state will be right
+				trigger: function() {
+					if (this.type === "checkbox" && this.click && jQuery.nodeName(this, "input")) {
+						this.click();
+						return false;
+					}
+				},
+
+				// For cross-browser consistency, don't fire native .click() on links
+				_default: function(event) {
+					return jQuery.nodeName(event.target, "a");
+				}
+			},
+
+			beforeunload: {
+				postDispatch: function(event) {
+
+					// Support: Firefox 20+
+					// Firefox doesn't alert if the returnValue field is not set.
+					if (event.result !== undefined) {
+						event.originalEvent.returnValue = event.result;
+					}
+				}
+			}
+		},
+
+		//event:  规定指定元素上要触发的事件,可以是自定义事件,或者任何标准事件。
+		//data:  传递到事件处理程序的额外参数。
+		//elem:  Element对象
+		trigger: function(event, data, elem) {
+			var i, cur, tmp, handle,
+				i = 0,
+				eventPath = [elem || document], //规划冒泡路线
+				type = event.type || event,//event是否为对象 如果为对象就取出type 如果是事件名称 就直接使用
+				cur = tmp = elem = elem || document,
+			//模拟事件对象	如果有jQuery.expando说明event已经是模拟的事件对象
+			event = event[jQuery.expando] ?
+				event :
+				new jQuery.Event(type, typeof event === "object" && event);
+			//console.log(event);
+
+			//定义event.target 属性
+			if (!event.target) {
+				event.target = elem;
+			}
+			//如果没有传入了参数,就把event存储在数组中 有传递合并数组
+			//如之前所看到：data可选,传递到事件处理程序的额外参数。注意:事件处理程序第一个参数默认是event(此为出处)
+			data = data == null ? [event] :
+				jQuery.markArray(data, [event]);//合并数组
+             
+			//事件类型是否需要进行特殊化处理   focus
+			special = jQuery.event.special[type] || {};
+			//如果事件类型已经有trigger方法，就调用它
+			if (special.trigger && special.trigger.apply(elem, data) === false) {
+				return;
+			}
+			//自己已经在冒泡路线中 不重复添加
+			cur = cur.parentNode;
+			//查找当前元素的父元素 添加到eventPath (规划冒泡路线)数组中
+			for (; cur; cur = cur.parentNode) {
+				eventPath.push(cur);
+				tmp = cur;
+			}
+
+			if (tmp === (elem.ownerDocument || document)) { //当tmp为document时,cur为空,就退出循环
+				eventPath.push(tmp.defaultView || tmp.parentWindow || window); //模拟冒泡到window对象
+			}
+			//console.log(eventPath);
+
+			//沿着上面规划好的冒泡路线，把经过的元素节点的指定类型事件的回调逐一触发执行
+			while ((cur = eventPath[i++])) {
+				//先判断在缓存系统中是否有此元素绑定的此事件类型的回调方法，如果有，就取出来	
+				handle = (data_priv.get(cur, "events") || {})[event.type] && data_priv.get(cur, "handle");
+				if (handle) {
+					console.log(handle)
+                    handle.apply(cur, data);
+				}
+			}
+		},
 	}
+
+    //模拟Event对象
+	jQuery.Event = function(src, props) {//src:事件名称
+		//创建一个jQuery.Event实例对象
+		if (!(this instanceof jQuery.Event)) {//如果不是使用new操作符就返回一个jQuey.Event实例对象
+			return new jQuery.Event(src, props);
+		}
+		//事件类型
+		this.type = src;
+		// 如果传入事件没有时间戳，则创建时间戳
+		this.timeStamp = src && src.timeStamp || jQuery.now();
+		// jQuery.Event实例对象标记
+		this[jQuery.expando] = true;//唯一标识符 每次生成的jQuery,Event实例的expando值都不一样
+	}
+
+	jQuery.Event.prototype = {
+		isDefaultPrevented: returnFalse,
+		isPropagationStopped: returnFalse,
+		isImmediatePropagationStopped: returnFalse,
+		//取消事件的默认动作
+		preventDefault: function() {
+			var e = this.originalEvent;
+
+			this.isDefaultPrevented = returnTrue;
+
+			if (e && e.preventDefault) {
+				e.preventDefault();
+			}
+		},
+		// 方法阻止事件冒泡到父元素,阻止任何父事件处理程序被执行。
+		stopPropagation: function() {
+			var e = this.originalEvent;
+
+			this.isPropagationStopped = returnTrue;
+
+			if (e && e.stopPropagation) {
+				e.stopPropagation();
+			}
+		},
+		stopImmediatePropagation: function() {
+			this.isImmediatePropagationStopped = returnTrue;
+			this.stopPropagation();
+		}
+	};
 
 	jQuery.fn.extend({
 		each: function(callback, args) {
 			return jQuery.each(this, callback, args);
 		},
 
-		on: function(types, fn) {//接收事件类型和回调函数
+		on: function(types, fn) {
 			var type;
-			if (typeof types === "object") {//如果使用对象类型调用就遍历对象属性，再递归调用自身绑定事件
+			if (typeof types === "object") {
 				for (type in types) {
-					this.on(type, types[type]);
+					this.on(types[type], fn);
 				}
-				return;
 			}
-			return this.each(function() {//调用each方法
+			return this.each(function() {
 				//this  element对象
-				jQuery.event.add(this, types, fn);//为DOM元素注册事件处理程序
+				jQuery.event.add(this, types, fn);
 			});
-		}
+		},
+		//语法: data可选,传递到事件处理程序的额外参数。  注意:事件处理程序第一个参数默认是event
+		trigger: function(type, data) {
+			return this.each(function() {
+				jQuery.event.trigger(type, data, this);
+			});
+		},
 	})
 
 	function createOptions(options) {
@@ -507,8 +648,3 @@
 
 	root.$ = root.jQuery = jQuery;
 })(this);
-
-
-
-
-

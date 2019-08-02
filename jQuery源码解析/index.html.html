@@ -7,20 +7,13 @@
     <title>Document</title>
 </head>
 <body>
-    <div class="box"></div>
-    <script src="./5.Deferred.js"></script>
+    <div class="box">123</div>
     <!-- <script src="./jq.js"></script> -->
+    <script src="./6.on方法原型解析.js"></script>
     <script>
-        
-        var dtd = $.Deferred();
-        dtd.then(function(a,b) {
-           console.log(b);
-        }).then(function(a,b) {
-            console.log(b);
-        }).then(function(a,b) {
-            console.log(b);
+        $(".box").on("click",function() {
+            console.log(123);
         })
-        dtd.resolve();
 
         // dtd.resolve();
         // dtd.resolve();
