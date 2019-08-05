@@ -372,19 +372,24 @@
 		get: function(elem, key) {
 			//找到或者创建缓存  cache  box 映射的对象   name
 			var cache = this.cache[this.key(elem)]; //{}  this.key(elem) === ID  1  cache  box
-			console.log(this.cache)
 			//key 有值直接在缓存中取读
 			return key === undefined ? cache : cache[key]; //你想要获取的数据  "name"  cache["name"] = ?
 		},
 		//key = value
-		set: function(owner, key, value) {
+		set: function(owner, key, value) {//
 			var prop;
-			var unlock = this.key(owner); //1
-			var cache = this.cache[unlock]; // box 映射的对象 
-			if (typeof key === "string") {
+			var unlock = this.key(owner); //拿到缓存中的键
+			var cache = this.cache[unlock]; // 取出缓存的映射的对象 
+			if (typeof key === "string") {//key如果是字符串  $("#id").data("key","value")
 				cache[key] = value;
 			}
-			if (jQuery.isPlainObject(key)) {
+			if (jQuery.isPlainObject(key)) {//key如果是对象 
+				/**
+				 * 	$.data({
+				 * 		k1: 'v1',
+				 * 		k2: 'v2'
+				 * 	})
+				 */
 				for (prop in key) {
 					cache[prop] = key[prop];
 				}
@@ -407,6 +412,9 @@
 	var data_priv = new Data();
 
 	jQuery.fn.extend({
+		each: function(callback, args) {
+			return jQuery.each(this, callback, args);//this指向jQuery实例对象
+		},
 		//缓存数据
 		data: function(key, value) {
 			var _this = this;
@@ -431,16 +439,14 @@
 	jQuery.extend({
 		queue: function(elem, type, data) {
 			var queue;
-
 			if (elem) {
-				type = (type || "fx") + "queue";
-				queue = data_priv.get(elem, type);//{"1":{数据不同  firstqueue:[],name:"max"}}
-
-				// Speed up dequeue by getting out quickly if this is just a lookup
-				if (data) {
-					if (!queue || jQuery.isArray(data)) {
-						queue = data_priv.access(elem, type, jQuery.makeArray(data));
-					} else {
+				type = (type || "fx") + "queue";//确认队列名称 默认fxqueue
+				//拿到缓存对象 没有的话会去自动生成缓存对象{}
+				queue = data_priv.get(elem, type);
+				if (data) {//是否传入了回调函数 如果传入为set操作 没有就是get操作
+					if (!queue || jQuery.isArray(data)) {	//第一次{}[key]肯定是undefined 所以要去判断queue是否有值
+						queue = data_priv.access(elem, type, jQuery.makeArray(data));//进行数据注册
+					} else {//第二次调用时 queue一定是一个数组了 可以直接插入回调函数
 						queue.push(data);
 					}
 				}
@@ -449,13 +455,13 @@
 		},
 		dequeue: function(elem, type) {
 			type = type || "fx";
-			var queue = jQuery.queue(elem, type), // firstqueue  []
-				startLength = queue.length,
-				next = function() {
+			var queue = jQuery.queue(elem, type), //拿到队列
+				startLength = queue.length,//定义队列长度
+				next = function() {//下一个将要执行的callback
 					jQuery.dequeue(elem, type);
 				},
 				hooks = jQuery._queueHooks(elem, type),
-				fn = queue.shift();
+				fn = queue.shift();//出列 取出第一个回调函数
 			// 进程锁
 			if (fn === "inprogress") {
 				fn = queue.shift();
