@@ -30,15 +30,16 @@ function optimizeCb(func,context,count) {
     }
 }
 
-function sortedIndex(array, obj, iteratee, context) {
+function sortedIndex(array, obj, iteratee, context) {//被遍历的数组 需要查找的值 迭代器函数 上下文对象
+    //if(iteratee == null) {return function(value) {return value;}}
     iteratee = cb(iteratee, context, 1);//生成迭代器
     var value = iteratee(obj);
     //二分查找
     var low = 0,
         high = array.length;
     while(low < high) {
-        var mid = Math.floor((low + high) / 2);
-        if(iteratee(array(mid) < value)) {
+        var mid = Math.floor((low + high) / 2);//取数组中间下标
+        if(iteratee(array(mid) < value)) {//通过中间下标拿到中间值 判断中间值是否小于需要查找的值
             low = mid + 1;
         } else {
             high = mid;
@@ -47,10 +48,10 @@ function sortedIndex(array, obj, iteratee, context) {
     return low;
 }
 
-function createPredicateIndexFindet(dir) {
-    return function(array, predicate, context) {
-        predicate = cb(predicate, context);
-        var length = array.length;
+function createPredicateIndexFinder(dir) {
+    return function(array, predicate, context) {//被遍历数组数组 真值检测函数 上下文对象
+        predicate = cb(predicate, context);//获取真值检测对象
+        var length = array.length;//获取被遍历数组长度
         var index = dir > 0 ? 0 : length - 1;//确定遍历起始位置
         for(; index >= 0 && index < length; index += dir) {
             if(predicate(array[index], index, array)) return index;
@@ -65,19 +66,20 @@ function isNaN(obj) {
 function isBoolean(obj) {
     return toString.call(obj) === '[object Boolean]';
 }
-function createIndexFinder(dir, pridicateFind, sortedIndex) {
-    return function(array, item, idx) {
+function createIndexFinder(dir, pridicateFind, sortedIndex) {//遍历的方向 真值检测函数 有序数组的查询方式
+    //这里是将真值检测函数 和 有序数组的查询方式 进行了闭包缓存
+    return function(array, item, idx) {//被遍历数组 检测的值 是否为有序数组
         var i = 0,
-            length = array.length;
-        //第三个参数为true，用二分查找优化，否则遍历查找
-        if(sortedIndex && isBoolean(idx) && length) {
-            idx = sortedIndex(array, item);
-            return array[idx] === item ? idx : -1;
-        }
+            length = array.length;//获取被遍历数组的长度
         //特殊情况 如果查找元素是 NaN类型 NaN !== NaN
         if(item !== item) {
             idx = pridicateFind(slice.call(array, i, length), isNaN);
             return idx >= 0 ? idex + i : -1;
+        }
+        //第三个参数为true，用有序数组的查询方式优化，否则遍历查找
+        if(sortedIndex && isBoolean(idx) && length) {
+            idx = sortedIndex(array, item);//调用有序数组的查询方式
+            return array[idx] === item ? idx : -1;
         }
         //非上述情况 正常遍历
         for(idx = dir > 0 ? i : length -1; idx >= 0 && idx < length; idx += dir) {
@@ -91,8 +93,8 @@ var identity = function(value) {
     return value;
 }
 
-var findIndex= createPredicateIndexFindet(1);
-var findLastIndex= createPredicateIndexFindet(-1);
+var findIndex= createPredicateIndexFinder(1);
+var findLastIndex= createPredicateIndexFinder(-1);
 
 //查询item在array中第一次出现的位置
 var _indexOf = createIndexFinder(1, findIndex, sortedIndex);
