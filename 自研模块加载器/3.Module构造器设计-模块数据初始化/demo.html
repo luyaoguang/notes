@@ -7,13 +7,11 @@
     <title>Document</title>
 </head>
 <body>
-    <div style="height:3000px;"></div>
-    <script src="./12.throttle与debounce.js"></script>
+    <script src="./demo.js"></script>
     <script>
-        var debounce = _.debounce(function() {
-            console.log('hello debounce')
-        },1500,true);
-        window.onscroll = debounce;
+        startUp.use(["a.js","b.js"],function() {
+            console.log("startUp....")
+        })
     </script>
 </body>
 </html>

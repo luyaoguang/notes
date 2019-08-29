@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+    <div id="content"></div>
+    <script type="text/template" id="tpl">
+        <ul class="list">
+            <%obj.forEach(function(e, i, a) {%>
+                <% if(i === a.length -1){%>
+                    <li class="last-item"><%=e.name%></li>
+                <%} else {%>
+                    <li><%=e.name%></li>
+                <%}%>
+            <%})%>
+        </ul>
+    </script>
+    <script type="text/template" id="tpl">
+        hello:<%=name%>
+    </script>
+</body>
+<script>
+    var data = [
+        {name: 'user1'},
+        {name: 'user2'},
+        {name: 'user3'}
+    ]
+
+    var template = function(templateString, settings) {//解析模板
+        var RULES = {
+            interpolate:/<%=([\s\S]+?)%>/g,//插入变量
+            escape:/<%=-([\s\S]+?)%>/g,//字符串逃逸
+            expression:/<%([\s\S]+?)%>/g//执行代码
+        }
+        // settings = _.extend({}, RULES, settings);//扩展自定义模板匹配类型
+        settings = RULES;
+        // var matcher =  /<%([\s\S]+?)%>|<%=([\s\S]+?)%>|<%=-([\s\S]+?)%>/g;//这种会出现错误 因为第一个模式包含后面两个模式 所以 <%([\s\S]+?)%>一定要放在最后面
+        var matcher = new RegExp([
+            settings.interpolate.source,
+            settings.escape.source,
+            settings.expression.source
+        ].join("|"),"g"); // matcher = /<%([\s\S]+?)%>|<%-([\s\S]+?)%>|<%=([\s\S]+?)%>/g
+        var source = "_p += '";
+
+        var index = 0;
+        templateString.replace(matcher, function(match, interpolate, escape, expression, offset) {//offset首次出现位置
+            source += templateString.slice(index, offset).replace(/\n/g,"\\n");
+            index = offset + match.length;
+            if(interpolate) {//变量
+                source += "'+\n ((_t = " + interpolate + ") == null ? '' : _t) + \n'";
+            } else if(escape) {//字符串逃逸
+
+            } else if(expression) {//逻辑代码
+                source += "';\n" + expression + "\n _p+='"
+            }
+        })
+        source += templateString.slice(index).replace(/\n/g,"\\n") + "';";
+        source = "with(obj) {\n" + source + "}\n";
+        source = "var _t , _p = '';"+ source +"return _p;\n";
+        //数据交互 渲染函数
+        //var fn = new Function("name","age","alert(name)")  //name,age会被当作形参 alert(name)会被当作函数体
+        //fn("user1") => 会alert出user1
+
+        var render = new Function('obj', source);
+        var compiled = function(data) {
+            return render.call(null, data);
+        }
+        return compiled;
+        /*
+            function render() {
+                var _t , _p = '';
+                with(obj) {
+                    _p += 'hello:'+((_t = name) == null ? '' : _t) + ' ';
+                }
+                return _p;
+            }
+        */
+
+        // var _t , _p = '';
+        // with(obj) {
+        //     _p += '<ul class="list">\n            ';
+        //     obj.forEach(function(e, i, a) {
+        //     _p+='\n                ';
+        //     if(i === a.length -1){
+        //     _p+='\n                    <li class="last-item">'+
+        //     ((_t = e.name) == null ? '' : _t) + 
+        //     '</li>\n                ';
+        //     } else {
+        //     _p+='\n                    <li>'+
+        //     ((_t = e.name) == null ? '' : _t) + 
+        //     '</li>\n                ';
+        //     }
+        //     _p+='\n            ';
+        //     })
+        //     _p+='';
+        // }
+        //     return _p;
+    }
+        var templateString = document.getElementById("tpl").innerHTML.trim();//文本
+        var compiled = template(templateString);//解析
+        var renderString = compiled(data);//数据交互 渲染数据
+        document.getElementById("content").innerHTML = renderString;//页面 渲染
+</script>
+</html>

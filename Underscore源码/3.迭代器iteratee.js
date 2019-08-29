@@ -82,7 +82,8 @@ console.log(data);//[3,6,9]
         if(context == void(0)) {//如果没有传入上下文对象 就直接返回传入的迭代器
             return func;
         }
-        switch(count == null ? 3 : count) {//默认为3
+        //return func.apply(context, arguments); //arguments执行效率低
+        switch(count == null ? 3 : count) {//默认为3 //执行效率高
             case 1:
                 return function(value) {
                     return func.call(context, valvue);
